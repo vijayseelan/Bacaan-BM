@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kemahiran Membaca Bahasa Melayu</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #45a049;
+            --background-color: #f0f0f0;
+            --text-color: #333;
+            --container-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-top: 30px;
+        }
+
+        .level-select, .material-select {
+            margin-bottom: 30px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:hover, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .reading-material {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="password"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="date"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #result {
+            margin-top: 30px;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0%;
+            height: 20px;
+            background-color: var(--primary-color);
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            transition: width 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .user-controls, .evaluation-section {
+            margin-bottom: 20px;
+        }
+
+        .difficult-words {
+            background-color: #ffe0b3;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .difficult-word {
+            display: inline-block;
+            background-color: #ffcc80;
+            margin: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .difficult-word:hover {
+            background-color: #ffb74d;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Aplikasi Kemahiran Membaca Bahasa Melayu</h1>
+        
+        <div class="user-controls">
+            <input type="text" id="username" placeholder="Masukkan nama pengguna">
+            <input type="password" id="password" placeholder="Masukkan kata laluan">
+            <button onclick="register()">Daftar</button>
+            <button onclick="login()">Log Masuk</button>
+            <button onclick="logout()">Log Keluar</button>
+            <button onclick="saveProgress()">Simpan Kemajuan</button>
+            <button onclick="loadProgress()">Muat Kemajuan</button>
+        </div>
+
+        <div class="level-select">
+            <h2>Pilih Tahap:</h2>
+            <select id="level-selector" onchange="loadMaterials()">
+                <option value="mudah">Mudah</option>
+                <option value="mediocre">Sederhana</option>
+                <option value="good">Baik</option>
+            </select>
+        </div>
+        
+        <div class="material-select">
+            <h2>Pilih Bahan Bacaan:</h2>
+            <select id="material-selector" onchange="loadReadingMaterial()">
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        
+        <div class="evaluation-section">
+            <h2>Penilaian Guru:</h2>
+            <input type="date" id="evaluation-date" placeholder="Tarikh Penilaian">
+            <select id="evaluation-level">
+                <option value="1">1 - Mudah</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5 - Sederhana</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10 - Baik</option>
+            </select>
+        </div>
+
+        <div class="progress-bar">
+            <div id="progress" class="progress">0%</div>
+        </div>
+        
+        <div id="reading-content" class="reading-material"></div>
+        
+        <div class="difficult-words">
+            <h3>Kata-Kata Sukar:</h3>
+            <div id="difficult-words-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAyxwfLTjdfc4XqZPje8BnWqtlbvTQGUFw",
+            authDomain: "bacaan-bahasa-melayu.firebaseapp.com",
+            databaseURL: "https://bacaan-bahasa-melayu-default-rtdb.firebaseio.com",
+            projectId: "bacaan-bahasa-melayu",
+            storageBucket: "bacaan-bahasa-melayu.appspot.com",
+            messagingSenderId: "1074115303910",
+            appId: "1:1074115303910:web:df781b567c8c9d4db54e4d",
+            measurementId: "G-XS9D0Z1N2T"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Register new user
+        function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            auth.createUserWithEmailAndPassword(username + '@example.com', password)
+                .then((userCredential) => {
+                    alert('Pendaftaran berjaya!');
+                })
+                .catch((error) => {
+                    alert('Ralat: ' + error.message);
+                });
+        }
+
+        // Login existing user
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(username + '@example.com', password)
+                .then((userCredential) => {
+                    alert('Log masuk berjaya!');
+                })
+                .catch((error) => {
+                    alert('Ralat: ' + error.message);
+                });
+        }
+
+        // Logout user
+        function logout() {
+            auth.signOut().then(() => {
+                alert('Log keluar berjaya!');
+            }).catch((error) => {
+                alert('Ralat: ' + error.message);
+            });
+        }
+
+        // Reading materials
+        const materials = {
+            mudah: [
+                "Kucing Saya", "Sekolah Saya", "Rumah Saya", "Kawan Saya", "Bunga Raya",
+                "Bahan Bacaan 6", "Bahan Bacaan 7", "Bahan Bacaan 8", "Bahan Bacaan 9", "Bahan Bacaan 10",
+                "Bahan Bacaan 11", "Bahan Bacaan 12", "Bahan Bacaan 13", "Bahan Bacaan 14", "Bahan Bacaan 15",
+                "Bahan Bacaan 16", "Bahan Bacaan 17", "Bahan Bacaan 18", "Bahan Bacaan 19", "Bahan Bacaan 20",
+                "Bahan Bacaan 21", "Bahan Bacaan 22", "Bahan Bacaan 23", "Bahan Bacaan 24", "Bahan Bacaan 25",
+                "Bahan Bacaan 26", "Bahan Bacaan 27", "Bahan Bacaan 28", "Bahan Bacaan 29", "Bahan Bacaan 30"
+            ],
+            mediocre: [
+                "Bahan Bacaan 31", "Bahan Bacaan 32", "Bahan Bacaan 33", "Bahan Bacaan 34", "Bahan Bacaan 35",
+                "Bahan Bacaan 36", "Bahan Bacaan 37", "Bahan Bacaan 38", "Bahan Bacaan 39", "Bahan Bacaan 40",
+                "Bahan Bacaan 41", "Bahan Bacaan 42", "Bahan Bacaan 43", "Bahan Bacaan 44", "Bahan Bacaan 45",
+                "Bahan Bacaan 46", "Bahan Bacaan 47", "Bahan Bacaan 48", "Bahan Bacaan 49", "Bahan Bacaan 50",
+                "Bahan Bacaan 51", "Bahan Bacaan 52", "Bahan Bacaan 53", "Bahan Bacaan 54", "Bahan Bacaan 55",
+                "Bahan Bacaan 56", "Bahan Bacaan 57", "Bahan Bacaan 58", "Bahan Bacaan 59", "Bahan Bacaan 60"
+            ],
+            good: [
+                "Bahan Bacaan 61", "Bahan Bacaan 62", "Bahan Bacaan 63", "Bahan Bacaan 64", "Bahan Bacaan 65",
+                "Bahan Bacaan 66", "Bahan Bacaan 67", "Bahan Bacaan 68", "Bahan Bacaan 69", "Bahan Bacaan 70",
+                "Bahan Bacaan 71", "Bahan Bacaan 72", "Bahan Bacaan 73", "Bahan Bacaan 74", "Bahan Bacaan 75",
+                "Bahan Bacaan 76", "Bahan Bacaan 77", "Bahan Bacaan 78", "Bahan Bacaan 79", "Bahan Bacaan 80",
+                "Bahan Bacaan 81", "Bahan Bacaan 82", "Bahan Bacaan 83", "Bahan Bacaan 84", "Bahan Bacaan 85",
+                "Bahan Bacaan 86", "Bahan Bacaan 87", "Bahan Bacaan 88", "Bahan Bacaan 89", "Bahan Bacaan 90"
+            ]
+        };
+
+        // Load materials based on selected level
+        function loadMaterials() {
+            const level = document.getElementById('level-selector').value;
+            const materialSelector = document.getElementById('material-selector');
+            materialSelector.innerHTML = '';
+            materials[level].forEach(material => {
+                const option = document.createElement('option');
+                option.value = material;
+                option.textContent = material;
+                materialSelector.appendChild(option);
+            });
+            loadReadingMaterial(); // Load the first reading material by default
+        }
+
+        // Load reading material text
+        function loadReadingMaterial() {
+            const selectedMaterial = document.getElementById('material-selector').value;
+            const readingContent = document.getElementById('reading-content');
+            readingContent.innerHTML = `<h3>${selectedMaterial}</h3>`;
+            let text = "";
+
+            if (selectedMaterial === "Kucing Saya") {
+                text = "Ini kucing saya. Kucing saya berwarna putih. Kucing saya bernama Comel. Kucing saya sangat nakal.";
+            } else if (selectedMaterial === "Sekolah Saya") {
+                text = "Ini sekolah saya. Sekolah saya sangat besar. Sekolah saya mempunyai padang. Padang sekolah saya sangat besar.";
+            } else if (selectedMaterial === "Rumah Saya") {
+                text = "Ini rumah saya. Rumah saya sangat besar. Rumah saya mempunyai tiga bilik. Rumah saya mempunyai pintu yang besar.";
+            } else if (selectedMaterial === "Kawan Saya") {
+                text = "Ini kawan saya. Kawan saya sangat baik. Kawan saya suka bermain bola. Kawan saya tinggal dekat rumah saya.";
+            } else if (selectedMaterial === "Bunga Raya") {
+                text = "Ini bunga raya. Bunga raya berwarna merah. Bunga raya adalah bunga kebangsaan. Bunga raya sangat cantik.";
+            } else {
+                text = `Ini adalah teks untuk ${selectedMaterial}. Klik pada kata-kata sukar untuk menambah ke dalam senarai.`;
+            }
+
+            const words = text.split(" ");
+            words.forEach(word => {
+                const span = document.createElement('span');
+                span.textContent = word + " ";
+                span.onclick = function() {
+                    addDifficultWord(word);
+                };
+                readingContent.appendChild(span);
+            });
+            loadProgress(selectedMaterial); // Load progress for the selected material
+        }
+
+        // Add difficult word
+        function addDifficultWord(word) {
+            const difficultWordsList = document.getElementById('difficult-words-list');
+            const wordElement = document.createElement('div');
+            wordElement.className = 'difficult-word';
+            wordElement.textContent = word;
+            wordElement.onclick = function() {
+                removeDifficultWord(wordElement);
+            };
+            difficultWordsList.appendChild(wordElement);
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Sila log masuk dahulu.');
+                return;
+            }
+            const username = user.email.split('@')[0];
+            const selectedMaterial = document.getElementById('material-selector').value;
+
+            database.ref('users/' + username + '/difficultWords/' + selectedMaterial).push(word, (error) => {
+                if (error) {
+                    alert('Gagal menyimpan kata sukar: ' + error.message);
+                } else {
+                    console.log('Kata sukar disimpan.');
+                }
+            });
+        }
+
+        // Remove difficult word
+        function removeDifficultWord(element) {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Sila log masuk dahulu.');
+                return;
+            }
+            const username = user.email.split('@')[0];
+            const selectedMaterial = document.getElementById('material-selector').value;
+
+            const word = element.textContent;
+            database.ref('users/' + username + '/difficultWords/' + selectedMaterial).orderByValue().equalTo(word).once('value', snapshot => {
+                const updates = {};
+                snapshot.forEach(child => {
+                    updates[child.key] = null;
+                });
+                database.ref('users/' + username + '/difficultWords/' + selectedMaterial).update(updates, (error) => {
+                    if (error) {
+                        alert('Gagal memadam kata sukar: ' + error.message);
+                    } else {
+                        console.log('Kata sukar dipadam.');
+                        element.remove();
+                    }
+                });
+            });
+        }
+
+        // Save progress
+        function saveProgress() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Sila log masuk dahulu.');
+                return;
+            }
+            const username = user.email.split('@')[0];
+            const level = document.getElementById('level-selector').value;
+            const material = document.getElementById('material-selector').value;
+            const date = document.getElementById('evaluation-date').value;
+            const evaluation = document.getElementById('evaluation-level').value;
+
+            const userProgress = {
+                level: level,
+                material: material,
+                date: date,
+                evaluation: evaluation
+            };
+
+            database.ref('users/' + username + '/progress/' + material).set(userProgress, (error) => {
+                if (error) {
+                    alert('Gagal menyimpan kemajuan: ' + error.message);
+                } else {
+                    alert('Kemajuan disimpan.');
+                    updateProgress(evaluation);
+                }
+            });
+        }
+
+        // Load progress
+        function loadProgress(material = null) {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Sila log masuk dahulu.');
+                return;
+            }
+            const username = user.email.split('@')[0];
+            const selectedMaterial = material || document.getElementById('material-selector').value;
+
+            database.ref('users/' + username + '/progress/' + selectedMaterial).once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById('level-selector').value = data.level;
+                    document.getElementById('material-selector').value = data.material;
+                    document.getElementById('evaluation-date').value = data.date;
+                    document.getElementById('evaluation-level').value = data.evaluation;
+                    updateProgress(data.evaluation);
+                    loadDifficultWords(username, selectedMaterial);
+                    alert('Kemajuan dimuat.');
+                } else {
+                    alert('Tiada kemajuan dijumpai untuk bahan bacaan ini.');
+                    resetProgress();
+                }
+            });
+        }
+
+        // Reset progress bar and difficult words list
+        function resetProgress() {
+            document.getElementById('progress').style.width = '0%';
+            document.getElementById('progress').textContent = '0%';
+            document.getElementById('difficult-words-list').innerHTML = '';
+        }
+
+        // Load difficult words
+        function loadDifficultWords(username, material) {
+            const difficultWordsList = document.getElementById('difficult-words-list');
+            difficultWordsList.innerHTML = '';
+
+            database.ref('users/' + username + '/difficultWords/' + material).once('value', (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const word = childSnapshot.val();
+                    const wordElement = document.createElement('div');
+                    wordElement.className = 'difficult-word';
+                    wordElement.textContent = word;
+                    wordElement.onclick = function() {
+                        removeDifficultWord(wordElement);
+                    };
+                    difficultWordsList.appendChild(wordElement);
+                });
+            });
+        }
+
+        // Update progress bar
+        function updateProgress(evaluation) {
+            const progress = document.getElementById('progress');
+            const percentage = (evaluation / 10) * 100;
+            progress.style.width = percentage + '%';
+            progress.textContent = percentage + '%';
+        }
+
+        // Initialize the material options on page load
+        document.addEventListener('DOMContentLoaded', loadMaterials);
+    </script>
+</body>
+</html>
